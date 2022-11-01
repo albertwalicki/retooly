@@ -5,7 +5,7 @@ const setHelpers = require('./setHelpers');
 const CONFIG_PATH = './.retooly.json';
 
 module.exports = function plopMain(plop) {
-  const currentPath = process.env.INIT_CWD;
+  const currentPath = process.env.INIT_CWD || './';
 
   setHelpers(plop);
 
@@ -42,26 +42,26 @@ module.exports = function plopMain(plop) {
         name: 'name',
         message: 'Provide component name',
       },
-      {
-        type: 'checkbox',
-        name: 'packages',
-        message: 'Select packages to import',
-        choices: ['styled-components', 'prop-types'],
-        default: config?.packages ?? [],
-      },
     ],
     actions: [
       {
         type: 'add',
-        path: `${currentPath}/{{name}}/index.js`,
+        path: `${currentPath}/{{name}}/index.${
+          config?.projectExtension || 'js'
+        }`,
         templateFile: 'templates/index.hbs',
       },
       {
         type: 'add',
-        path: `${currentPath}/{{name}}/{{name}}.js`,
-        templateFile: `templates/${
-          config?.projectType === 'React-Native' ? 'componentRN' : 'component'
-        }.hbs`,
+        path: `${currentPath}/{{name}}/{{name}}.${
+          config?.projectExtension || 'js'
+        }`,
+        templateFile: `templates/component.hbs`,
+      },
+      {
+        type: 'add',
+        path: `${currentPath}/{{name}}/{{name}}-style.module.scss`,
+        templateFile: `templates/style.hbs`,
       },
       function lint(answers) {
         if (
@@ -80,42 +80,14 @@ module.exports = function plopMain(plop) {
     ],
   });
 
-  plop.setGenerator('Component - set default imports', {
-    description:
-      'Configures default imports for generated components and saves it in config file',
-    prompts: [
-      {
-        type: 'checkbox',
-        name: 'packages',
-        message: 'Select packages to import',
-        choices: ['styled-components', 'prop-types'],
-        default: config?.packages ?? [],
-      },
-    ],
-    actions: [
-      function saveConfig(answers) {
-        const updatedConfig = {
-          ...(config || {}),
-          ...answers,
-        };
-
-        try {
-          fs.writeFileSync(CONFIG_PATH, JSON.stringify(updatedConfig));
-        } catch (err) {
-          console.log("Something went wrong. Couldn't save config file: ", err);
-        }
-      },
-    ],
-  });
-
-  plop.setGenerator('Set project type (React / React-Native)', {
+  plop.setGenerator('Set project type (TSX/JS)', {
     description: 'Configures project type',
     prompts: [
       {
         type: 'list',
-        name: 'projectType',
+        name: 'projectExtension',
         message: 'Select project type',
-        choices: ['React', 'React-Native'],
+        choices: ['tsx', 'js'],
         default: config?.projectType ?? [],
       },
     ],
